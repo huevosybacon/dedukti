@@ -26,10 +26,38 @@ let mk_Lam l x a b      = Lam (l,x,a,b)
 let mk_Pi l x a b       = Pi (l,x,a,b)
 let mk_Arrow l a b      = Pi (l,qmark,a,b)
 
+  
+  
+(* let rec compare_ou = Pervasives.compare   *)
+  
+(* and mk_ou f a1 a2 = *)
+(*   match (a1,a2) with *)
+(*   | (x,Const (l,md,"0"))  -> x *)
+(*   | (Const (l,md,"0"), x) -> x *)
+(*   | (_, Const (l,md,"1")) -> Const (l,md,"1") *)
+(*   | (Const (l,md,"1"), _) -> Const (l,md,"1") *)
+(*   | (Ou (moca_x, moca_y), moca_z) -> ou (moca_x, (ou (moca_y, moca_z))) *)
+(*   | (moca_x, Ou (moca_y, moca_z)) -> *)
+(*     if compare_ou moca_x moca_y > 0 *)
+(*     then ou (moca_y, (ou (moca_x, moca_z))) *)
+(*     else Ou (moca_x, (Ou (moca_y, moca_z))) *)
+(*   | (moca_z, Et (moca_x, moca_y)) -> *)
+(*     et ((ou (moca_z, moca_x)), (ou (moca_z, moca_y))) *)
+(*   | (Et (moca_x, moca_y), moca_z) -> *)
+(*     et ((ou (moca_x, moca_z)), (ou (moca_y, moca_z))) *)
+(*   | (moca_x, moca_y) when compare_ou moca_x moca_y > 0 -> ou (moca_y, moca_x) *)
+(*   | (moca_x, moca_y) -> Ou (moca_x, moca_y) *)
+  
 let mk_App f a1 args =
   match f with
-    | App (f',a1',args') -> App (f',a1',args'@(a1::args))
-    | _ -> App(f,a1,args)
+  (* | Const (lc,md,nm) -> *)
+  (*    match args,nm with *)
+  (*    | (a2::nil),"Et" -> mk_et f a1 a2 *)
+  (*    | (a2::nil),"Ou" -> mk_ou f a1 a2 *)
+	
+  (*    | _,_ -> App(f,a1,args) *)
+  | App (f',a1',args') -> App (f',a1',args'@(a1::args))
+  | _ -> App(f,a1,args)
 
 let rec term_eq t1 t2 =
   (* t1 == t2 || *)
