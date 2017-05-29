@@ -26,36 +26,50 @@ let mk_Lam l x a b      = Lam (l,x,a,b)
 let mk_Pi l x a b       = Pi (l,x,a,b)
 let mk_Arrow l a b      = Pi (l,qmark,a,b)
 
-  
-  
-(* let rec compare_ou = Pervasives.compare   *)
-  
-(* and mk_ou f a1 a2 = *)
-(*   match (a1,a2) with *)
-(*   | (x,Const (l,md,"0"))  -> x *)
-(*   | (Const (l,md,"0"), x) -> x *)
-(*   | (_, Const (l,md,"1")) -> Const (l,md,"1") *)
-(*   | (Const (l,md,"1"), _) -> Const (l,md,"1") *)
-(*   | (Ou (moca_x, moca_y), moca_z) -> ou (moca_x, (ou (moca_y, moca_z))) *)
-(*   | (moca_x, Ou (moca_y, moca_z)) -> *)
-(*     if compare_ou moca_x moca_y > 0 *)
-(*     then ou (moca_y, (ou (moca_x, moca_z))) *)
-(*     else Ou (moca_x, (Ou (moca_y, moca_z))) *)
-(*   | (moca_z, Et (moca_x, moca_y)) -> *)
-(*     et ((ou (moca_z, moca_x)), (ou (moca_z, moca_y))) *)
-(*   | (Et (moca_x, moca_y), moca_z) -> *)
-(*     et ((ou (moca_x, moca_z)), (ou (moca_y, moca_z))) *)
-(*   | (moca_x, moca_y) when compare_ou moca_x moca_y > 0 -> ou (moca_y, moca_x) *)
-(*   | (moca_x, moca_y) -> Ou (moca_x, moca_y) *)
-  
+(* *************************************************** *)
+(* Changed fragile ("awful") version for the interval type from cubical *)
+let rec compare_ou = Pervasives.compare
+
+and mk_ou f a1 a2 =
+  let apd = App(f,a1,(a2::[])) in
+  let ap f' x y = App(f',x,(y::[])) in
+  let str id = string_of_ident id in
+  match (a1,a2) with
+  | (x, Const (l,md,id)) -> (match str id with | "0" ->  x | "1" ->  Const (l,md,id) | _ -> apd)
+  | (Const (l,md,id), x) -> (match str id with | "0" ->  x | "1" ->  Const (l,md,id) | _ -> apd)
+  | (App(f',x,(y::[])), z) ->
+    (match f' with
+     | Const (_,_,id) ->
+       (match str id with
+        | "Ou" -> mk_ou f x (mk_ou f' y z)
+        | "Et" -> mk_et f' (mk_ou f x z) (mk_ou f y z)
+        | _ -> apd
+       )
+     | _ -> apd
+    )
+  | (x, App(f',y,(z::[]))) ->
+     (match f' with
+      | Const (_,_,id) ->
+        (match str id with
+         | "Ou" ->
+	         if compare_ou x y > 0 then mk_ou f y (mk_ou f' x z) else ap f x (ap f' y z)
+         | "Et" -> mk_et f' (mk_ou f x z) (mk_ou f y z)
+         | _ -> apd
+        )
+      | _ -> apd
+     )
+  | (x, y) when compare_ou x y > 0 -> mk_ou f y x
+  | (x, y) -> apd
+
 let mk_App f a1 args =
+  let str id = string_of_ident id in
   match f with
-  (* | Const (lc,md,nm) -> *)
-  (*    match args,nm with *)
-  (*    | (a2::nil),"Et" -> mk_et f a1 a2 *)
-  (*    | (a2::nil),"Ou" -> mk_ou f a1 a2 *)
-	
-  (*    | _,_ -> App(f,a1,args) *)
+  | Const (lc,md,nm) ->
+    (match args,str nm with
+     | (a2::nil),"Et" -> mk_et f a1 a2
+     | (a2::nil),"Ou" -> mk_ou f a1 a2
+     | _,_ -> App(f,a1,args)
+    )
   | App (f',a1',args') -> App (f',a1',args'@(a1::args))
   | _ -> App(f,a1,args)
 
